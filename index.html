@@ -157,23 +157,52 @@
 
         /* Print Settings for A4 Portrait */
         @media print {
-            @page { size: A4 portrait; margin: 5mm; }
-            body { background: white; padding: 0; display: block; }
-            .form-container, .mobile-hint { display: none !important; }
+            @page {
+                size: A4 portrait;
+                margin: 5mm;
+            }
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+                display: block;
+            }
+            .form-container, .mobile-hint {
+                display: none !important;
+            }
+
+            /* Override the inline flex container wrapping the page */
+            body > div[style*="display: flex"] {
+                display: block !important;
+            }
+
             .a4-page {
                 box-shadow: none;
-                padding: 10mm;
+                padding: 0 !important; /* Removed padding to maximize printable area */
                 margin: 0;
                 width: 100%;
-                min-height: auto;
-                overflow: visible; /* Ensure nothing is cut off in print */
+                min-height: 0 !important;
+                height: auto !important;
+                display: block !important; /* Switch from flex to block to prevent print bugs */
             }
+
             .sticker-container {
                 border: 2px solid #000 !important;
-                page-break-inside: avoid;
+                page-break-inside: avoid; /* Legacy print break support */
+                break-inside: avoid;      /* Modern print break support */
                 min-width: auto;
+                margin-bottom: 10mm;      /* Space between the two copies */
             }
-            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+            /* Remove margin from the final element so it doesn't trigger a blank second page */
+            .sticker-container:last-child {
+                margin-bottom: 0;
+            }
+
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
         }
     </style>
 </head>
@@ -222,7 +251,7 @@
             <input type="date" id="in-go-date" value="">
         </div>
         <div class="form-group">
-            <label>Departure Flight</label>
+            <label>Flight Number</label>
             <input type="text" id="in-go-flight" value="">
         </div>
     </div>
@@ -271,7 +300,7 @@
             <input type="date" id="in-ret-date" value="">
         </div>
         <div class="form-group">
-            <label>Return Flight</label>
+            <label>Flight Number</label>
             <input type="text" id="in-ret-flight" value="">
         </div>
     </div>
