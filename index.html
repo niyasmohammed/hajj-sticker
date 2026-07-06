@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hajj Baggage Sticker Generator</title>
+    <style>
+        :root {
+            --border-color: #333;
+            --green: #2d6a4f;
+            --brown: #7f5539;
+            --bg-light: #f4f4f9;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--bg-light);
+            display: flex;
+            flex-direction: row;
+            gap: 30px;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        /* Form Styles */
+        .form-container {
+            width: 350px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+            box-sizing: border-box;
+            flex-shrink: 0;
+        }
+
+        .form-container h3 { margin-top: 0; border-bottom: 2px solid var(--green); padding-bottom: 5px;}
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: #444; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit;
+        }
+        .form-row { display: flex; gap: 10px; }
+        .form-row .form-group { flex: 1; min-width: 0; } /* min-width 0 ensures inputs don't overflow flex container */
+
+        .btn-print {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--green);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            text-transform: uppercase;
+        }
+
+        .btn-print:hover {
+            background-color: #1e4d39;
+        }
+
+        /* A4 Page View Styles */
+        .a4-page {
+            width: 210mm;
+            min-height: 297mm;
+            background: white;
+            padding: 15mm;
+            border-radius: 4px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-sizing: border-box;
+        }
+
+        .sticker-container {
+            width: 100%;
+            border: 2px solid var(--border-color);
+            padding: 5px;
+            box-sizing: border-box;
+            background: white;
+        }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; border-top: 2px solid var(--border-color); }
+        .cell { padding: 8px; border-bottom: 2px solid var(--border-color); border-right: 2px solid var(--border-color); }
+        .cell:last-child { border-right: none; }
+        .cell-right { border-right: none !important; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 2px solid var(--border-color); }
+        .flag { width: 50px; height: 30px; background: linear-gradient(to bottom, #ff9933 33%, white 33% 66%, #138808 66%); border: 1px solid #999; flex-shrink: 0;}
+
+        .flight-row { display: grid; grid-template-columns: 50px 1fr 1fr 1fr; border-bottom: 2px solid var(--border-color); }
+        .flight-label { display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; writing-mode: vertical-rl; transform: rotate(180deg); }
+
+        .accommodation { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; text-align: center; border-bottom: 2px solid var(--border-color); }
+
+        h1, h2, p { margin: 0; padding: 0; }
+        .label { font-size: 0.70rem; color: #555; text-transform: uppercase; }
+
+        .value { font-size: 1.1rem; font-weight: bold; margin-top: 3px; text-transform: uppercase; min-height: 1.2rem; word-break: break-word;}
+        .lg-value { font-size: 1.8rem; color: var(--green); min-height: 2rem; }
+
+        .footer-text {
+            color: #888;
+            font-style: italic;
+            font-size: 0.85rem;
+            text-align: center;
+            padding: 8px 5px 3px 5px;
+            background-color: white;
+            line-height: 1.4;
+        }
+
+        /* Mobile Responsiveness */
+        @media screen and (max-width: 900px) {
+            body {
+                flex-direction: column;
+                align-items: center;
+                padding: 10px;
+            }
+            .form-container {
+                width: 100%;
+                max-width: 500px;
+                position: relative;
+                top: 0;
+            }
+            /* Make the preview scrollable on mobile so the layout doesn't break */
+            .a4-page {
+                width: 100%;
+                max-width: 100vw;
+                overflow-x: auto;
+                padding: 10px;
+            }
+            /* Force the sticker to stay large enough to read/print */
+            .sticker-container {
+                min-width: 700px;
+            }
+            .mobile-hint {
+                display: block;
+                text-align: center;
+                color: #666;
+                font-size: 0.9rem;
+                margin-bottom: 10px;
+                font-style: italic;
+            }
+        }
+
+        /* Hide hint on desktop */
+        @media screen and (min-width: 901px) {
+            .mobile-hint { display: none; }
+        }
+
+        /* Print Settings for A4 Portrait */
+        @media print {
+            @page { size: A4 portrait; margin: 5mm; }
+            body { background: white; padding: 0; display: block; }
+            .form-container, .mobile-hint { display: none !important; }
+            .a4-page {
+                box-shadow: none;
+                padding: 10mm;
+                margin: 0;
+                width: 100%;
+                min-height: auto;
+                overflow: visible; /* Ensure nothing is cut off in print */
+            }
+            .sticker-container {
+                border: 2px solid #000 !important;
+                page-break-inside: avoid;
+                min-width: auto;
+            }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Form Entry Section -->
+<div class="form-container no-print">
+    <h3>Pilgrim Details</h3>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Cover No</label>
+            <input type="text" id="in-cover" value="">
+        </div>
+        <div class="form-group">
+            <label>Maktab No</label>
+            <input type="text" id="in-maktab" value="">
+        </div>
+    </div>
+    <div class="form-group">
+        <label>Passport No</label>
+        <input type="text" id="in-passport" value="">
+    </div>
+    <div class="form-group">
+        <label>Pilgrim Name</label>
+        <input type="text" id="in-name" value="">
+    </div>
+    <div class="form-group">
+        <label>SHI Name</label>
+        <input type="text" id="in-shi" value="">
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Mobile (India)</label>
+            <input type="text" id="in-mob-ind" value="">
+        </div>
+        <div class="form-group">
+            <label>Mobile (KSA)</label>
+            <input type="text" id="in-mob-ksa" value="">
+        </div>
+    </div>
+
+    <h3>Flight Details</h3>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Departure Date</label>
+            <input type="date" id="in-go-date" value="">
+        </div>
+        <div class="form-group">
+            <label>Departure Flight</label>
+            <input type="text" id="in-go-flight" value="">
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Embarkation</label>
+            <select id="in-go-from">
+                <option value="" disabled selected>Select</option>
+                <option value="COCHIN">Cochin</option>
+                <option value="CALICUT">Calicut</option>
+                <option value="KANNUR">Kannur</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Destination</label>
+            <select id="in-go-to">
+                <option value="" disabled selected>Select</option>
+                <option value="JEDDAH">Jeddah</option>
+                <option value="MADINAH">Madinah</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label>Return From</label>
+            <select id="in-ret-from">
+                <option value="" disabled selected>Select</option>
+                <option value="MADINAH">Madinah</option>
+                <option value="JEDDAH">Jeddah</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Return To</label>
+            <select id="in-ret-to">
+                <option value="" disabled selected>Select</option>
+                <option value="COCHIN">Cochin</option>
+                <option value="CALICUT">Calicut</option>
+                <option value="KANNUR">Kannur</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Return Date</label>
+            <input type="date" id="in-ret-date" value="">
+        </div>
+        <div class="form-group">
+            <label>Return Flight</label>
+            <input type="text" id="in-ret-flight" value="">
+        </div>
+    </div>
+
+    <h3>Accommodation</h3>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Makkah Bldg</label>
+            <input type="text" id="in-mak-bldg" value="">
+        </div>
+        <div class="form-group">
+            <label>Makkah Room</label>
+            <input type="text" id="in-mak-room" value="">
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Madina Bldg</label>
+            <input type="text" id="in-mad-bldg" value="">
+        </div>
+        <div class="form-group">
+            <label>Madina Room</label>
+            <input type="text" id="in-mad-room" value="">
+        </div>
+    </div>
+
+    <!-- Print Button -->
+    <button type="button" class="btn-print" onclick="window.print()">🖨️ Print Page</button>
+</div>
+
+<!-- A4 Page Preview (Contains 2 Copies) -->
+<div style="display: flex; flex-direction: column; width: 100%;">
+    <div class="mobile-hint no-print">Swipe horizontally to preview full sticker 👉</div>
+
+    <div class="a4-page" id="print-wrapper">
+
+        <!-- STICKER COPY 1 -->
+        <div class="sticker-container">
+            <div class="header">
+                <div class="flag"></div>
+                <div style="text-align: center;">
+                    <h2 style="color: var(--green); font-size: 1.3rem;">HAJ COMMITTEE OF INDIA</h2>
+                    <p style="font-size: 0.9rem;">Haj-2027 (H)1448</p>
+                </div>
+                <div style="text-align: right;">
+                    <div class="label">Maktab No</div>
+                    <div class="value out-maktab lg-value"></div>
+                </div>
+            </div>
+
+            <div class="grid">
+                <div class="cell"><div class="label">Cover No</div><div class="value out-cover"></div></div>
+                <div class="cell cell-right"><div class="label">Passport No</div><div class="value out-passport"></div></div>
+                <div class="cell">
+                    <div class="label">Hajj Pilgrim Name</div>
+                    <div class="value out-name" style="margin-bottom: 10px;"></div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <div><div class="label">Mobile (IND)</div><div class="value out-mob-ind" style="font-size: 0.95rem;"></div></div>
+                        <div><div class="label">Mobile (KSA)</div><div class="value out-mob-ksa" style="font-size: 0.95rem;"></div></div>
+                    </div>
+                </div>
+                <div class="cell cell-right">
+                    <div class="label">SHI Name</div>
+                    <div class="value out-shi" style="font-size: 1rem;"></div>
+                </div>
+            </div>
+
+            <div class="flight-row" style="background-color: #f0f7f4;">
+                <div class="flight-label" style="background-color: var(--green);">GO</div>
+                <div class="cell"><div class="label">DEP DATE</div><div class="value out-go-date"></div></div>
+                <div class="cell"><div class="label">ROUTE</div><div class="value" style="color: var(--green);"><span class="out-go-from"></span> ➔ <span class="out-go-to"></span></div></div>
+                <div class="cell cell-right"><div class="label">FLIGHT NO</div><div class="value out-go-flight"></div></div>
+            </div>
+
+            <div class="flight-row" style="background-color: #f7f3f0;">
+                <div class="flight-label" style="background-color: var(--brown);">RET</div>
+                <div class="cell"><div class="label">RET DATE</div><div class="value out-ret-date"></div></div>
+                <div class="cell"><div class="label">ROUTE</div><div class="value" style="color: var(--brown);"><span class="out-ret-from"></span> ➔ <span class="out-ret-to"></span></div></div>
+                <div class="cell cell-right"><div class="label">FLIGHT NO</div><div class="value out-ret-flight"></div></div>
+            </div>
+
+            <div class="accommodation">
+                <div class="cell"><div class="label">Makkah Bldg No</div><div class="value out-mak-bldg lg-value"></div></div>
+                <div class="cell"><div class="label">Makkah Room No</div><div class="value out-mak-room lg-value"></div></div>
+                <div class="cell" style="padding: 5px; display: flex; align-items: center; justify-content: center;">
+                    <img class="qr-code" src="" alt="QR" width="90" height="90">
+                </div>
+                <div class="cell"><div class="label">Madina Bldg No</div><div class="value out-mad-bldg lg-value"></div></div>
+                <div class="cell cell-right"><div class="label">Madina Room No</div><div class="value out-mad-room lg-value"></div></div>
+            </div>
+
+            <!-- Custom Footer Note for Copy 1 -->
+            <div class="footer-text">
+                May the Almighty bless us with a Hajj that is Maqbool and Mabroor. Ameen.<br>
+                Prepared by Niyas Mohammed, Thalikulam
+            </div>
+        </div>
+
+        <!-- STICKER COPY 2 -->
+        <div class="sticker-container">
+            <div class="header">
+                <div class="flag"></div>
+                <div style="text-align: center;">
+                    <h2 style="color: var(--green); font-size: 1.3rem;">HAJ COMMITTEE OF INDIA</h2>
+                    <p style="font-size: 0.9rem;">Haj-2027 (H)1448</p>
+                </div>
+                <div style="text-align: right;">
+                    <div class="label">Maktab No</div>
+                    <div class="value out-maktab lg-value"></div>
+                </div>
+            </div>
+
+            <div class="grid">
+                <div class="cell"><div class="label">Cover No</div><div class="value out-cover"></div></div>
+                <div class="cell cell-right"><div class="label">Passport No</div><div class="value out-passport"></div></div>
+                <div class="cell">
+                    <div class="label">Hajj Pilgrim Name</div>
+                    <div class="value out-name" style="margin-bottom: 10px;"></div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <div><div class="label">Mobile (IND)</div><div class="value out-mob-ind" style="font-size: 0.95rem;"></div></div>
+                        <div><div class="label">Mobile (KSA)</div><div class="value out-mob-ksa" style="font-size: 0.95rem;"></div></div>
+                    </div>
+                </div>
+                <div class="cell cell-right">
+                    <div class="label">SHI Name</div>
+                    <div class="value out-shi" style="font-size: 1rem;"></div>
+                </div>
+            </div>
+
+            <div class="flight-row" style="background-color: #f0f7f4;">
+                <div class="flight-label" style="background-color: var(--green);">GO</div>
+                <div class="cell"><div class="label">DEP DATE</div><div class="value out-go-date"></div></div>
+                <div class="cell"><div class="label">ROUTE</div><div class="value" style="color: var(--green);"><span class="out-go-from"></span> ➔ <span class="out-go-to"></span></div></div>
+                <div class="cell cell-right"><div class="label">FLIGHT NO</div><div class="value out-go-flight"></div></div>
+            </div>
+
+            <div class="flight-row" style="background-color: #f7f3f0;">
+                <div class="flight-label" style="background-color: var(--brown);">RET</div>
+                <div class="cell"><div class="label">RET DATE</div><div class="value out-ret-date"></div></div>
+                <div class="cell"><div class="label">ROUTE</div><div class="value" style="color: var(--brown);"><span class="out-ret-from"></span> ➔ <span class="out-ret-to"></span></div></div>
+                <div class="cell cell-right"><div class="label">FLIGHT NO</div><div class="value out-ret-flight"></div></div>
+            </div>
+
+            <div class="accommodation">
+                <div class="cell"><div class="label">Makkah Bldg No</div><div class="value out-mak-bldg lg-value"></div></div>
+                <div class="cell"><div class="label">Makkah Room No</div><div class="value out-mak-room lg-value"></div></div>
+                <div class="cell" style="padding: 5px; display: flex; align-items: center; justify-content: center;">
+                    <img class="qr-code" src="" alt="QR" width="90" height="90">
+                </div>
+                <div class="cell"><div class="label">Madina Bldg No</div><div class="value out-mad-bldg lg-value"></div></div>
+                <div class="cell cell-right"><div class="label">Madina Room No</div><div class="value out-mad-room lg-value"></div></div>
+            </div>
+
+            <!-- Custom Footer Note for Copy 2 -->
+            <div class="footer-text">
+                May the Almighty bless us with a Hajj that is Maqbool and Mabroor. Ameen.<br>
+                Prepared by Niyas Mohammed, Thalikulam
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function updateOutputs(className, value) {
+        document.querySelectorAll('.' + className).forEach(el => { el.innerText = value; });
+    }
+
+    function formatDate(dateString) {
+        if (!dateString) return "";
+        const date = new Date(dateString);
+        const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+        return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+    }
+
+    function updateQRCode() {
+        const cover = document.getElementById('in-cover').value;
+        const name = document.getElementById('in-name').value;
+        const shi = document.getElementById('in-shi').value;
+        const mobInd = document.getElementById('in-mob-ind').value;
+        const mobKsa = document.getElementById('in-mob-ksa').value;
+        const makBldg = document.getElementById('in-mak-bldg').value;
+        const makRoom = document.getElementById('in-mak-room').value;
+        const madBldg = document.getElementById('in-mad-bldg').value;
+        const madRoom = document.getElementById('in-mad-room').value;
+
+        const qrText = `Cover No: ${cover}\nName: ${name}\nSHI: ${shi}\nMob (IND): ${mobInd}\nMob (KSA): ${mobKsa}\nMakkah: Bldg ${makBldg}, Rm ${makRoom}\nMadinah: Bldg ${madBldg}, Rm ${madRoom}`;
+        const encodedData = encodeURIComponent(qrText);
+
+        document.querySelectorAll('.qr-code').forEach(img => {
+            img.src = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodedData}`;
+        });
+    }
+
+    const bindings = [
+        { in: 'in-maktab', out: 'out-maktab' }, { in: 'in-cover', out: 'out-cover' },
+        { in: 'in-passport', out: 'out-passport' }, { in: 'in-name', out: 'out-name' },
+        { in: 'in-shi', out: 'out-shi' }, { in: 'in-mob-ind', out: 'out-mob-ind' },
+        { in: 'in-mob-ksa', out: 'out-mob-ksa' }, { in: 'in-go-flight', out: 'out-go-flight' },
+        { in: 'in-go-from', out: 'out-go-from' }, { in: 'in-go-to', out: 'out-go-to' },
+        { in: 'in-ret-flight', out: 'out-ret-flight' }, { in: 'in-ret-from', out: 'out-ret-from' },
+        { in: 'in-ret-to', out: 'out-ret-to' }, { in: 'in-mak-bldg', out: 'out-mak-bldg' },
+        { in: 'in-mak-room', out: 'out-mak-room' }, { in: 'in-mad-bldg', out: 'out-mad-bldg' },
+        { in: 'in-mad-room', out: 'out-mad-room' }
+    ];
+
+    bindings.forEach(bind => {
+        document.getElementById(bind.in).addEventListener('input', function() {
+            updateOutputs(bind.out, this.value);
+            const qrFields = ['in-cover', 'in-name', 'in-shi', 'in-mob-ind', 'in-mob-ksa', 'in-mak-bldg', 'in-mak-room', 'in-mad-bldg', 'in-mad-room'];
+            if(qrFields.includes(bind.in)) updateQRCode();
+        });
+    });
+
+    document.getElementById('in-go-date').addEventListener('input', function() { updateOutputs('out-go-date', formatDate(this.value)); });
+    document.getElementById('in-ret-date').addEventListener('input', function() { updateOutputs('out-ret-date', formatDate(this.value)); });
+
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const currentDate = `${yyyy}-${mm}-${dd}`;
+
+    document.getElementById('in-go-date').value = currentDate;
+    document.getElementById('in-ret-date').value = currentDate;
+    updateOutputs('out-go-date', formatDate(currentDate));
+    updateOutputs('out-ret-date', formatDate(currentDate));
+    updateOutputs('out-go-from', ''); updateOutputs('out-go-to', '');
+    updateOutputs('out-ret-from', ''); updateOutputs('out-ret-to', '');
+    updateQRCode();
+</script>
+
+</body>
+</html>
